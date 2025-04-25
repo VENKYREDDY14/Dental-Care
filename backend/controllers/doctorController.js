@@ -221,28 +221,68 @@ export const getAllDentists = async (req, res) => {
 export const getDoctorAppointments = async (req, res) => {
   try {
     const doctorId = req.userId; // Extract doctorId from middleware
-    console.log(doctorId)
+
     // Fetch appointments for the doctor
     const appointments = await Appointment.find({ doctorId });
-    console.log(appointments)
+
     if (!appointments || appointments.length === 0) {
       return res.status(404).json({ message: 'No appointments found for this doctor' });
     }
 
-    // Fetch user details for each appointment
+    // Fetch user details for each appointment and include problem and cures
     const appointmentsWithUserDetails = await Promise.all(
       appointments.map(async (appointment) => {
-        const user = await User.findById(appointment.userId).select('name email phoneNumber');
+        const user = await User.findById(appointment.userId).select('name phoneNumber'); // Fetch user details
         return {
           ...appointment._doc, // Spread the appointment details
           user, // Add the user details
+          problem: appointment.problem, // Include the problem
+          cures: appointment.cures, // Include the cures
         };
       })
     );
-    console.log(appointmentsWithUserDetails)
+
     res.status(200).json(appointmentsWithUserDetails);
   } catch (error) {
     console.error(`Error fetching appointments: ${error.message}`);
     res.status(500).json({ message: 'Failed to fetch appointments' });
+  }
+};
+
+
+export const addCureToAppointment = async (req, res) => {
+  const { appointmentId } = req.params;
+  const { description } = req.body;
+  const image = req.file ? req.file.path : null; // Handle image upload if provided
+
+  try {
+    if (!description) {
+      return res.status(400).json({ message: 'Cure description is required' });
+    }
+
+    // Update the appointment with the cure and set status to completed
+    const updatedAppointment = await Appointment.findByIdAndUpdate(
+      appointmentId,
+      {
+        $push: {
+          cures: {
+            description,
+            image,
+            date: new Date(),
+          },
+        },
+        status: 'completed', // Update the status to completed
+      },
+      { new: true }
+    );
+
+    if (!updatedAppointment) {
+      return res.status(404).json({ message: 'Appointment not found' });
+    }
+
+    res.status(200).json({ message: 'Cure added successfully', appointment: updatedAppointment });
+  } catch (error) {
+    console.error(`Error adding cure: ${error.message}`);
+    res.status(500).json({ message: 'Failed to add cure' });
   }
 };

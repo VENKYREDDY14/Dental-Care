@@ -31,10 +31,10 @@ const dentistsample = [
   },
 ];
 
-
 const Dentists = () => {
   const [dentists, setDentists] = useState([]);
   const [selectedDentist, setSelectedDentist] = useState(null);
+  const [problem, setProblem] = useState(''); // State to store the patient's problem
 
   useEffect(() => {
     const fetchDentists = async () => {
@@ -43,6 +43,7 @@ const Dentists = () => {
         setDentists(response.data);
       } catch (error) {
         console.error('Error fetching dentists:', error.message);
+        setDentists(dentistsample); // Fallback to static data if API fails
       }
     };
 
@@ -55,6 +56,7 @@ const Dentists = () => {
 
   const closeModal = () => {
     setSelectedDentist(null);
+    setProblem(''); // Reset the problem field when closing the modal
   };
 
   const handleBookAppointment = async () => {
@@ -64,9 +66,15 @@ const Dentists = () => {
       return;
     }
 
+    if (!problem.trim()) {
+      toast.error('Please describe your problem before booking an appointment.'); // Show error toast
+      return;
+    }
+
     const appointmentDetails = {
       doctorId: selectedDentist._id,
       date: new Date().toISOString(), // Current date and time
+      problem, // Include the patient's problem
     };
 
     try {
@@ -99,7 +107,7 @@ const Dentists = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {dentists.map((dentist) => (
               <div
-                key={dentist._id}
+                key={dentist.id || dentist._id} // Use static ID or dynamic ID
                 className="bg-white shadow-lg rounded-lg p-6 hover:shadow-xl transition"
               >
                 <img
@@ -126,11 +134,17 @@ const Dentists = () => {
                 <strong>Specialization:</strong> {selectedDentist.specialization || selectedDentist.speciality}
               </p>
               <p className="text-gray-600 mb-4">
-                <strong>Email:</strong> {selectedDentist.email}
+                <strong>Email:</strong> {selectedDentist.contact || selectedDentist.email}
               </p>
               <p className="text-gray-600 mb-6">
-                <strong>Phone:</strong> {selectedDentist.phoneNumber}
+                <strong>Phone:</strong> {selectedDentist.phone}
               </p>
+              <textarea
+                className="w-full p-3 border rounded-lg mb-4"
+                placeholder="Describe your problem..."
+                value={problem}
+                onChange={(e) => setProblem(e.target.value)}
+              ></textarea>
               <button
                 className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition w-full"
                 onClick={handleBookAppointment}

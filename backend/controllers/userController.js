@@ -187,16 +187,17 @@ export const loginUser = async (req, res) => {
 // Book an appointment
 export const bookAppointment = async (req, res) => {
   const { userId } = req;
-  const { doctorId } = req.body;
+  const { doctorId, problem } = req.body;
 
   try {
-    if (!userId || !doctorId) {
-      return res.status(400).json({ message: 'User ID and Doctor ID are required' });
+    if (!userId || !doctorId || !problem) {
+      return res.status(400).json({ message: 'User ID, Doctor ID, and Problem are required' });
     }
 
     const newAppointment = new Appointment({
       userId,
       doctorId,
+      problem, // Store the patient's problem
       status: 'pending',
     });
 
@@ -208,7 +209,6 @@ export const bookAppointment = async (req, res) => {
     res.status(500).json({ message: 'Failed to book appointment' });
   }
 };
-
 // Get appointments for a specific user
 export const getUserAppointments = async (req, res) => {
   try {
@@ -221,13 +221,15 @@ export const getUserAppointments = async (req, res) => {
       return res.status(404).json({ message: 'No appointments found for this user' });
     }
 
-    // Fetch doctor details for each appointment
+    // Fetch doctor details for each appointment and include problem and cures
     const appointmentsWithDoctorDetails = await Promise.all(
       appointments.map(async (appointment) => {
         const doctor = await Doctor.findById(appointment.doctorId).select('name speciality email phoneNumber');
         return {
           ...appointment._doc, // Spread the appointment details
           doctor, // Add the doctor details
+          problem: appointment.problem, // Include the problem
+          cures: appointment.cures, // Include the cures
         };
       })
     );
