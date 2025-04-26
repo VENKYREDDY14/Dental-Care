@@ -2,19 +2,22 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Header from '../Header/Header';
 import { toast } from 'react-toastify';
+import { ThreeDots } from 'react-loader-spinner';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 
 const Appointments = () => {
   const [appointments, setAppointments] = useState([]);
-  const [selectedAppointment, setSelectedAppointment] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchAppointments = async () => {
       const jwtToken = localStorage.getItem('jwtToken');
       if (!jwtToken) {
         toast.error('You must be logged in to view your appointments.');
-        return setAppointments(getSampleAppointments());
+        setLoading(false);
+        return;
       }
 
       try {
@@ -22,10 +25,10 @@ const Appointments = () => {
           headers: { Authorization: `Bearer ${jwtToken}` },
         });
         setAppointments(response.data);
+        setLoading(false);
       } catch (error) {
-        console.error('Error fetching appointments:', error.message);
-        toast.error('Failed to fetch appointments. Using sample data.');
-        setAppointments(getSampleAppointments());
+        setError('Failed to fetch appointments. Please try again.');
+        setLoading(false);
       }
     };
 
@@ -34,115 +37,85 @@ const Appointments = () => {
 
   const handleDownloadPDF = (appointment) => {
     const doc = new jsPDF();
-    doc.setFontSize(18).text('Cure Details', 14, 20);
-
-    // Add appointment details
+    doc.setFontSize(18).text('Appointment Details', 14, 20);
     doc.setFontSize(12);
-    doc.text(`Dentist: ${appointment.dentistName || appointment.doctor?.name}`, 14, 30);
-    doc.text(`Specialization: ${appointment.specialization || appointment.doctor?.speciality}`, 14, 40);
-    doc.text(`Problem: ${appointment.problem}`, 14, 50);
-    doc.text(`Date: ${new Date(appointment.date).toLocaleDateString()}`, 14, 60);
-    doc.text(`Time: ${appointment.time || new Date(appointment.date).toLocaleTimeString()}`, 14, 70);
+    doc.text(`Patient Name: ${appointment.user?.name || 'N/A'}`, 14, 30);
+    doc.text(`Patient Contact: ${appointment.user?.phoneNumber || 'N/A'}`, 14, 40);
+    doc.text(`Doctor: ${appointment.doctor?.name || 'N/A'}`, 14, 50);
+    doc.text(`Specialization: ${appointment.doctor?.speciality || 'N/A'}`, 14, 60);
+    doc.text(`Problem: ${appointment.problem || 'N/A'}`, 14, 70);
+    doc.text(`Date: ${new Date(appointment.date).toLocaleDateString() || 'N/A'}`, 14, 80);
+    doc.text(`Status: ${appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}`, 14, 90);
 
-    // Add cures table
-    if (appointment.cures?.length > 0) {
-      const curesData = appointment.cures.map((cure, index) => [
-        index + 1,
-        cure.description,
-        new Date(cure.date).toLocaleDateString(),
-      ]);
-      doc.autoTable({ head: [['#', 'Description', 'Date']], body: curesData, startY: 80 });
-    } else {
-      doc.text('No cures available.', 14, 80);
+    if (appointment.cures && appointment.cures.length > 0) {
+      doc.text('Cures:', 14, 100);
+      appointment.cures.forEach((cure, index) => {
+        doc.text(`${index + 1}. ${cure.description}`, 14, 110 + index * 10);
+        if (cure.image) {
+          const img = new Image();
+          img.src = cure.image;
+          doc.addImage(img, 'JPEG', 14, 120 + index * 20, 50, 50);
+        }
+      });
     }
 
-    doc.save(`Cure_Details_${appointment.id || appointment._id}.pdf`);
+    doc.save(`Appointment_${appointment._id}.pdf`);
   };
-
-  const getSampleAppointments = () => [
-    {
-      id: 1,
-      dentistName: 'Dr. John Doe',
-      specialization: 'Orthodontist',
-      date: '2025-04-30',
-      time: '10:00 AM',
-      status: 'Completed',
-      problem: 'Severe toothache in the upper molar region',
-      cures: [
-        {
-          description: 'Prescribed painkillers and antibiotics',
-          image: 'https://via.placeholder.com/150',
-          date: '2025-04-30',
-        },
-      ],
-    },
-    {
-      id: 2,
-      dentistName: 'Dr. Jane Smith',
-      specialization: 'Periodontist',
-      date: '2025-05-02',
-      time: '2:00 PM',
-      status: 'Pending',
-      problem: 'Bleeding gums',
-      cures: [],
-    },
-    {
-      id: 3,
-      dentistName: 'Dr. Emily Johnson',
-      specialization: 'Pediatric Dentist',
-      date: '2025-05-05',
-      time: '11:30 AM',
-      status: 'Cancelled',
-      problem: 'Tooth decay in a child',
-      cures: [],
-    },
-  ];
 
   const renderAppointmentCard = (appointment) => (
     <div
-      key={appointment._id || appointment.id}
+      key={appointment._id}
       className="bg-white shadow-md rounded-lg p-6 hover:shadow-lg transition"
     >
-      <h2 className="text-xl font-bold text-gray-800">{appointment.doctor?.name || appointment.dentistName}</h2>
-      <p className="text-gray-600">{appointment.doctor?.speciality || appointment.specialization}</p>
+      <h2 className="text-xl font-bold text-gray-800">{appointment.doctor?.name}</h2>
+      <p className="text-gray-600">{appointment.doctor?.speciality}</p>
       <p className="text-gray-600 mt-2">
         <strong>Problem:</strong> {appointment.problem}
       </p>
       <p className="text-gray-600 mt-2">
         <strong>Date:</strong> {new Date(appointment.date).toLocaleDateString()}
       </p>
-      <p className="text-gray-600">
-        <strong>Time:</strong> {appointment.time || new Date(appointment.date).toLocaleTimeString()}
-      </p>
       <p
         className={`mt-4 font-bold ${
           appointment.status.toLowerCase() === 'completed'
             ? 'text-green-600'
-            : appointment.status.toLowerCase() === 'pending'
-            ? 'text-yellow-600'
-            : 'text-red-600'
+            : 'text-gray-600'
         }`}
       >
-        {appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}
+        <strong>Status:</strong> {appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}
       </p>
       {appointment.status.toLowerCase() === 'completed' && (
-        <button
-          className="mt-4 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition w-full"
-          onClick={() => setSelectedAppointment(appointment)}
-        >
-          Show Download Option
-        </button>
-      )}
-      {selectedAppointment && selectedAppointment.id === appointment.id && (
         <button
           className="mt-4 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition w-full"
           onClick={() => handleDownloadPDF(appointment)}
         >
-          Download Cure Details
+          Download PDF
         </button>
       )}
     </div>
   );
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <ThreeDots color="#0b69ff" height={50} width={50} />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col justify-center items-center min-h-screen">
+        <img
+          alt="error view"
+          src="https://assets.ccbp.in/frontend/react-js/nxt-trendz-error-view-img.png"
+          className="w-[300px] h-[165px] sm:w-[200px] sm:h-[110px] md:w-[250px] md:h-[140px]"
+        />
+        <h1 className="text-xl font-bold text-red-500 mt-4">Error</h1>
+        <p className="text-red-500">{error}</p>
+      </div>
+    );
+  }
 
   return (
     <>

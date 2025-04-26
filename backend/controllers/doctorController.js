@@ -6,6 +6,8 @@ import validator from 'validator';
 import Appointment from '../models/appointments.js';
 import User from '../models/userModel.js';
 
+import {v2 as cloudinary} from 'cloudinary' // Import the configured Cloudinary instance
+
 // Generate OTP
 const generateOtp = () => Math.floor(100000 + Math.random() * 900000).toString();
 
@@ -241,7 +243,7 @@ export const getDoctorAppointments = async (req, res) => {
         };
       })
     );
-
+    console.log('Appointments with user details:', appointmentsWithUserDetails);  
     res.status(200).json(appointmentsWithUserDetails);
   } catch (error) {
     console.error(`Error fetching appointments: ${error.message}`);
@@ -251,13 +253,25 @@ export const getDoctorAppointments = async (req, res) => {
 
 
 export const addCureToAppointment = async (req, res) => {
+  console.log('Cloudinary Object:', cloudinary);
   const { appointmentId } = req.params;
   const { description } = req.body;
-  const image = req.file ? req.file.path : null; // Handle image upload if provided
 
   try {
     if (!description) {
       return res.status(400).json({ message: 'Cure description is required' });
+    }
+
+    let imageUrl = null;
+
+    // Upload image to Cloudinary if provided
+    if (req.file) {
+      console.log('File received:', req.file);
+      const result = await cloudinary.uploader.upload(req.file.path, {
+        folder: 'oralvis/cures', // Folder in Cloudinary
+      });
+      imageUrl = result.secure_url; // Get the secure URL of the uploaded image
+      console.log('Image uploaded to Cloudinary:', imageUrl);
     }
 
     // Update the appointment with the cure and set status to completed
@@ -267,7 +281,7 @@ export const addCureToAppointment = async (req, res) => {
         $push: {
           cures: {
             description,
-            image,
+            image: imageUrl, // Store the Cloudinary image URL
             date: new Date(),
           },
         },

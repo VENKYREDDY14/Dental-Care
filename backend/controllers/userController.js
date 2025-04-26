@@ -221,20 +221,22 @@ export const getUserAppointments = async (req, res) => {
       return res.status(404).json({ message: 'No appointments found for this user' });
     }
 
-    // Fetch doctor details for each appointment and include problem and cures
-    const appointmentsWithDoctorDetails = await Promise.all(
+    // Fetch doctor and user details for each appointment and include problem and cures
+    const appointmentsWithDetails = await Promise.all(
       appointments.map(async (appointment) => {
         const doctor = await Doctor.findById(appointment.doctorId).select('name speciality email phoneNumber');
+        const user = await User.findById(appointment.userId).select('name email phoneNumber');
         return {
           ...appointment._doc, // Spread the appointment details
           doctor, // Add the doctor details
+          user, // Add the user details
           problem: appointment.problem, // Include the problem
           cures: appointment.cures, // Include the cures
         };
       })
     );
 
-    res.status(200).json(appointmentsWithDoctorDetails);
+    res.status(200).json(appointmentsWithDetails);
   } catch (error) {
     console.error(`Error fetching appointments: ${error.message}`);
     res.status(500).json({ message: 'Failed to fetch appointments' });

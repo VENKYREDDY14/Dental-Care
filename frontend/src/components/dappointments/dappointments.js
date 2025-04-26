@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
+import { ThreeDots } from 'react-loader-spinner';
 import Dheader from '../Dheader/Dheader'; // Import the header component
 
 const DAppointments = () => {
@@ -8,12 +9,15 @@ const DAppointments = () => {
   const [selectedAppointment, setSelectedAppointment] = useState(null); // State for selected appointment
   const [cureDescription, setCureDescription] = useState(''); // State for cure description
   const [cureImage, setCureImage] = useState(null); // State for cure image
+  const [loading, setLoading] = useState(true); // State for loading
+  const [error, setError] = useState(null); // State for error
 
   useEffect(() => {
     const fetchAppointments = async () => {
       const jwtToken = localStorage.getItem('jwtToken'); // Retrieve the token from localStorage
       if (!jwtToken) {
         toast.error('You must be logged in to view your appointments.');
+        setLoading(false);
         return;
       }
 
@@ -25,9 +29,11 @@ const DAppointments = () => {
         });
 
         setAppointments(response.data);
+        setLoading(false);
       } catch (error) {
         console.error('Error fetching appointments:', error.message);
-        toast.error('Failed to fetch appointments. Please try again.');
+        setError('Failed to fetch appointments. Please try again.');
+        setLoading(false);
       }
     };
 
@@ -56,6 +62,7 @@ const DAppointments = () => {
       formData.append('image', cureImage);
     }
 
+    console.log(process.env.REACT_APP_BACKEND_URL);
     try {
       const response = await axios.post(
         `${process.env.REACT_APP_BACKEND_URL}/api/doctor/appointments/${selectedAppointment._id}/add-cure`,
@@ -67,7 +74,7 @@ const DAppointments = () => {
           },
         }
       );
-
+console.log(response);
       if (response.status === 200) {
         toast.success('Cure added successfully!');
         setAppointments((prevAppointments) =>
@@ -86,6 +93,28 @@ const DAppointments = () => {
       toast.error('Failed to add cure. Please try again.');
     }
   };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <ThreeDots color="#0b69ff" height={50} width={50} />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col justify-center items-center min-h-screen">
+        <img
+          alt="error view"
+          src="https://assets.ccbp.in/frontend/react-js/nxt-trendz-error-view-img.png"
+          className="w-[300px] h-[165px] sm:w-[200px] sm:h-[110px] md:w-[250px] md:h-[140px]"
+        />
+        <h1 className="text-xl font-bold text-red-500 mt-4">Error</h1>
+        <p className="text-red-500">{error}</p>
+      </div>
+    );
+  }
 
   return (
     <>

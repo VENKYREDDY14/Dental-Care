@@ -47,7 +47,7 @@ const Login = () => {
           if (role === 'patient') {
             navigate('/'); // Redirect to patient home page
           } else if (role === 'doctor') {
-            navigate('/doctor-dashboard'); // Redirect to doctor dashboard
+            navigate('/dappointments'); // Redirect to doctor dashboard
           } else {
             toast.error('Invalid role. Please contact support.');
           }

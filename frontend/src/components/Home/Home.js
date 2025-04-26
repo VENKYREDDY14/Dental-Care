@@ -4,7 +4,7 @@ import Header from '../Header/Header';
 const Home = () => (
   <>
     <Header />
-    <div className="flex flex-col items-center justify-center w-[90%] max-w-[1110px] mx-auto pt-2 pb-12 md:flex-row md:justify-between md:pt-24">
+    <div className="flex flex-col items-center h-screen justify-center w-[90%] max-w-[1110px] mx-auto pt-2 pb-12 md:flex-row md:justify-between md:pt-24">
       <div className="flex flex-col items-center md:items-start mt-[70px] md:mt-0">
         <h1 className="text-[#1e293b] font-bold text-[30px] leading-[1.2] text-center md:text-[46px] md:text-left">
           Welcome to OralVis
@@ -22,7 +22,7 @@ const Home = () => (
         </Link>
       </div>
       <img
-        src="https://via.placeholder.com/450" // Replace with an actual image URL
+        src="https://res.cloudinary.com/dsad92ak9/image/upload/qcvoeggyz73bq66ti9pc" 
         alt="Dentist illustration"
         className="hidden md:block w-1/2 max-w-[450px] ml-[85px]"
       />
