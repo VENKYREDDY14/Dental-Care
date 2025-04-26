@@ -139,7 +139,7 @@ Method	Endpoint	Description
 POST	/register	Register a new doctor
 POST	/login	Login a doctor
 GET	/appointments	Get appointments for the doctor
-PUT	/update-availability	Update doctor's availability
+PUT	/update-appointment	Update appointments status
 Technologies Used
 Frontend
 React.js
