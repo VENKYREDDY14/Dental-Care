@@ -7,10 +7,10 @@ const Home = () => (
     <div className="flex flex-col items-center h-screen justify-center w-[90%] max-w-[1110px] mx-auto pt-2 pb-12 md:flex-row md:justify-between md:pt-24">
       <div className="flex flex-col items-center md:items-start mt-[70px] md:mt-0">
         <h1 className="text-[#1e293b] font-bold text-[30px] leading-[1.2] text-center md:text-[46px] md:text-left">
-          Welcome to OralVis
+          Welcome to Dental Care
         </h1>
         <p className="font-roboto text-[14px] leading-7 text-[#64748b] mt-9 mb-0 text-center md:text-[18px] md:mt-0 md:text-left">
-          At OralVis, we connect you with the best dentists to ensure your oral health is in top shape. Explore our list of professional dentists and book an appointment today!
+          At Dental Care, we connect you with the best dentists to ensure your oral health is in top shape. Explore our list of professional dentists and book an appointment today!
         </p>
         <Link to="/dentists">
           <button
