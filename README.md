@@ -26,6 +26,8 @@ The goal of this project is to develop a Dental Checkup System that handles:
   - Patients can book appointments with doctors, providing relevant details.
 - **View Appointment History**:
   - Patients can view their appointment history, including status and doctor's details.
+- **Download Appointment Details**:
+   - Patients can download appointment details in pdf format
 
 ### **Doctor Features**
 
